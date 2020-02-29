@@ -1,0 +1,17 @@
+version: "3"
+services:
+  mysql:
+    container_name: mysql
+    image: mariadb:10.4.1
+    environment:
+      - TZ=CST-8
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=testdb
+      - MYSQL_USER=testdb
+      - MYSQL_PASSWORD=testdb
+    volumes:
+      #本地文件目录
+      - ./data/mysql:/var/lib/mysql
+      - ./conf/sql:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"

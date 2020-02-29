@@ -1,0 +1,74 @@
+version: "3"
+services:
+  mysql:
+    image: mariadb:10.4.1
+    environment:
+      - TZ=CST-8
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=grafana
+      - MYSQL_USER=grafana
+      - MYSQL_PASSWORD=grafana
+    volumes:
+      #本地文件目录
+      - ./data/mysql:/var/lib/mysql
+    ports:
+      - "13306:3306"
+  redis:
+    image: redis:4
+    ports:
+      # 端口映射
+      - 16379:6379
+  vmstorage:  
+    image: victoriametrics/vmstorage:v1.34.0-cluster
+    volumes:
+      - ./data/victoria:/data
+    command: 
+      - "-storageDataPath=/data"
+      - "-retentionPeriod=1"
+    ports:
+      - "8482:8482"
+      - "8400:8400"
+      - "8401:8401"
+  vmselect:  
+    image: victoriametrics/vmselect:v1.34.0-cluster
+    command: 
+      - "-selectNode=vmselect:8481"
+      - "-storageNode=vmstorage:8401"
+    ports:
+     - 8481:8481/tcp
+  vminsert:  
+    image: victoriametrics/vminsert:v1.34.0-cluster
+    command: 
+      - "-storageNode=vmstorage:8400"
+    ports:
+     - "8480:8480"
+  prometheus:
+    image: prom/prometheus:v2.16.0
+    command: 
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+      - "--storage.tsdb.no-lockfile"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./data/prometheus/:/prometheus
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+  grafana:
+    image: grafana/grafana:6.6.2
+    depends_on:
+      - mysql
+      - redis 
+    command:
+      - "--config=/etc/grafana/grafana.ini"
+    volumes:
+      - ./config/grafana.ini:/etc/grafana/grafana.ini
+      - ./data/grafana/:/var/lib/grafana
+      - ./log/grafana/:/var/log/grafana
+    ports:
+      - "3000:3000"
+    restart: always
+#  centos7:
+#    image: lijiaocn/sshproxy:1.0   
