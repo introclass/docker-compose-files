@@ -70,5 +70,14 @@ services:
     ports:
       - "3000:3000"
     restart: always
+  nginx:
+    image: nginx:1.17.9-alpine
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./config/nginx/conf.d:/etc/nginx/conf.d
+      - ./log/nginx:/var/log/nginx
+    ports:
+      - "8080:8080"
+    restart: always
 #  centos7:
 #    image: lijiaocn/sshproxy:1.0   
